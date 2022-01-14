@@ -95,14 +95,19 @@ static catTamanhos + #9, #10
 
 ;Inicio do programa
 main:
+	; --Abre a tela0 (menu do jogo)
 	loadn r1, #tela1Linha0
 	loadn r2, #0
 	loadn r3, #40		; Tamanho da Linha
-	loadn r4, #4 		; Maximo de tentativas
+	loadn r4, #4 		; Maximo de tentativas por padrao
 
 	call ImprimeTela
 	call EsperaEnter
+
+	; --Prepara a tela para iniciar de fato o loop do jogo
 	call ApagaTela
+	loadn r1, #tela2Linha0
+	call ImprimeTela
 	call SorteiaPalavra
 
 
@@ -114,11 +119,11 @@ main:
 	loadn r1, #2
 	loadn r2, #419			; Ponto central da tela	
 	div r0, r0, r1
-	sub r2, r2, r0			; Deslocando o inicio da palavra de acorodo com o tamanho
+	sub r2, r2, r0			; Deslocando a palavra pra esquerda de acordo com o tamanho
 	store posCursor, r2
 
 	loadn r1, #0 		; Guarda o numero da tentativa
-	loadn r3, #40
+	loadn r3, #40 		; Tamanho da linha da tela
 
 	loop_principal:
 		call ImprimeEspacos
@@ -129,11 +134,14 @@ main:
 		add r2, r2, r3		; Passa pra proxima linha
 		store posCursor, r2
 
-		cmp r1, r4
+		cmp r1, r4 			; Caso nao tenha excedido o numero de tentativas, continua
 		jne loop_principal
-	
+
+   main_Fim:
+
 	halt
 
+; --Usa uma chave pseudorandomica pra pegar uma palavra do catalogo
 SorteiaPalavra:
 	push r0
 	push r1
@@ -171,7 +179,9 @@ SorteiaPalavra:
 	pop r0
 	rts
 
-EsperaEnter: 	;Loop que espera entrada ao inicio do jogo
+
+; --Espera o jogador apertar ENTER e pega o "tempo" demorado pra ser usado como chave pseudorandomica depois
+EsperaEnter: 	
 	push r0
 	push r1
 	push r2
@@ -194,6 +204,7 @@ EsperaEnter: 	;Loop que espera entrada ao inicio do jogo
 	rts
 
 
+; --Imprime tracos na tela indicando quantos caracteres a palavra tem
 ImprimeEspacos:	; r0 = Numero da linha que vai iniciar
 	push r0
 	push r1
@@ -221,6 +232,7 @@ ImprimeEspacos:	; r0 = Numero da linha que vai iniciar
 	rts
 
 
+; --Recebe uma palavra digitada pelo jogador
 InputPalavra:
 	push r0
 	push r1
@@ -228,6 +240,7 @@ InputPalavra:
 	push r3
 	push r4
 	push r5
+	push r6
 
 	
 	loadn r1, #PalavraDigitada 	; Endereco reservado pra palavra a ser digitada
@@ -239,6 +252,9 @@ InputPalavra:
 		call InputLetra
 
 		load r0, Letra
+		loadn r6, #13
+		cmp r0, r6
+		jeq main_Fim
 		add r5, r1, r4 			; r5 = posicao da letra a ser inserida na memoria
 		storei r5, r0 			; Mem[r5] = r0
 
@@ -254,6 +270,7 @@ InputPalavra:
 	storei r4, r0
 
 
+	pop r6
 	pop r5
 	pop r4
 	pop r3
@@ -262,8 +279,8 @@ InputPalavra:
 	pop r0
 	rts
 
-
-InputLetra:	; Espera que uma tecla seja digitada e salva na variavel global "Letra"
+; --Espera que uma tecla seja digitada e salva na variavel global "Letra"
+InputLetra:
 	push r0
 	push r1
 
@@ -281,6 +298,7 @@ InputLetra:	; Espera que uma tecla seja digitada e salva na variavel global "Let
 	rts
 
 
+; --Compara a palavra digitada pelo jogador com a correta letra por letra
 ChecaPalavra:
 	push r0
 	push r1
@@ -313,6 +331,8 @@ ChecaPalavra:
 	pop r0
 	rts
 
+
+; --Checa uma letra com toda a palavra certa e pinta ela com a cor de acordo com sua aparicao e posicao
 ChecaLetra: ; r0 = Letra a ser checada com todas as outras
 	push r0
 	push r1
@@ -369,6 +389,10 @@ ChecaLetra: ; r0 = Letra a ser checada com todas as outras
 	pop r0
 	rts
 
+
+;********************************************************
+;                   IMPRIME STRING
+;********************************************************
 ImprimeLetra: 	; r0 = Letra a ser impressa, r5 = cor da letra, r3 = posicao na palavra
 	push r0
 	push r1
@@ -388,10 +412,6 @@ ImprimeLetra: 	; r0 = Letra a ser impressa, r5 = cor da letra, r3 = posicao na p
 	rts
 
 
-;********************************************************
-;                   IMPRIME STRING
-;********************************************************
-	
 ImprimeStr:	;  Rotina de Impresao de Mensagens:    r0 = Posicao da tela do primeiro caractere;  r1 = endereco onde comeca a mensagem; r2 = cor da mensagem.   Obs: a mensagem sera' impressa ate' encontrar "/0"
 	push fr		; Protege o registrador de flags
 	push r0	; protege o r0 na pilha para preservar seu valor
@@ -420,8 +440,7 @@ ImprimeStr:	;  Rotina de Impresao de Mensagens:    r0 = Posicao da tela do prime
 	pop r0
 	pop fr
 	rts
-	
-;------------------------	
+
 
 ;********************************************************
 ;                       APAGA TELA
@@ -489,31 +508,62 @@ ImprimeTela: 	;  Rotina de Impresao de Cenario na Tela Inteira
 	; Declara e preenche tela linha por linha (40 caracteres):
 tela1Linha0  : string "                                        "
 tela1Linha1  : string "                                        "
-tela1Linha2  : string " ####                                   "
-tela1Linha3  : string " #   #   ##    ###   ###   ####   ###   "
-tela1Linha4  : string " #   #  #  #  #     #     #    # #      "
-tela1Linha5  : string " ####  #    #  ###   ###  #    #  ###   "
-tela1Linha6  : string " #     ######     #     # #    #     #  "
-tela1Linha7  : string " #     #    # #   # #   # #    # #   #  "
-tela1Linha8  : string " #     #    #  ###   ###   ####   ###   "
-tela1Linha9  : string "                                        "
-tela1Linha10 : string "      #     #                           "
-tela1Linha11 : string "      #  #  #  ####  #####  #####       "
-tela1Linha12 : string "      #  #  # #    # #    # #    #      "
+tela1Linha2  : string "                                        "
+tela1Linha3  : string " ####                                   "
+tela1Linha4  : string " #   #   ##    ###   ###   ####   ###   "
+tela1Linha5  : string " #   #  #  #  #     #     #    # #      "
+tela1Linha6  : string " ####  #    #  ###   ###  #    #  ###   "
+tela1Linha7  : string " #     ######     #     # #    #     #  "
+tela1Linha8  : string " #     #    # #   # #   # #    # #   #  "
+tela1Linha9  : string " #     #    #  ###   ###   ####   ###   "
+tela1Linha10 : string "                                        "
+tela1Linha11 : string "      #     #                           "
+tela1Linha12 : string "      #  #  #  ####  #####  #####       "
 tela1Linha13 : string "      #  #  # #    # #    # #    #      "
-tela1Linha14 : string "      #  #  # #    # #####  #    #      "
-tela1Linha15 : string "      #  #  # #    # #   #  #    #      "
-tela1Linha16 : string "       ## ##   ####  #    # #####       "
-tela1Linha17 : string "                                        "
+tela1Linha14 : string "      #  #  # #    # #    # #    #      "
+tela1Linha15 : string "      #  #  # #    # #####  #    #      "
+tela1Linha16 : string "      #  #  # #    # #   #  #    #      "
+tela1Linha17 : string "       ## ##   ####  #    # #####       "
 tela1Linha18 : string "                                        "
 tela1Linha19 : string "                                        "
-tela1Linha20 : string "        Aperte ENTER para jogar         "
+tela1Linha20 : string "                                        "
 tela1Linha21 : string "                                        "
 tela1Linha22 : string "                                        "
 tela1Linha23 : string "                                        "
-tela1Linha24 : string "                                        "
-tela1Linha25 : string " Como Jogar:                            "
-tela1Linha26 : string "   Descubra a senha!                    "
-tela1Linha27 : string "   Letras amarelas = posicao errada     "
-tela1Linha28 : string "   Letras verdes = posicao e letra certa"
+tela1Linha24 : string "        Aperte ENTER para jogar         "
+tela1Linha25 : string "                                        "
+tela1Linha26 : string "                                        "
+tela1Linha27 : string "                                        "
+tela1Linha28 : string "                                        "
 tela1Linha29 : string "                                        "
+
+tela2Linha0  : string "o======================================o"
+tela2Linha1  : string "|             Passos Word              |"
+tela2Linha2  : string "| Como Jogar:                          |"
+tela2Linha3  : string "|  Descubra a senha!                   |"
+tela2Linha4  : string "|  Teste diferentes letras e palavras  |"
+tela2Linha5  : string "|   Amarelo = letra na posicao errada  |"
+tela2Linha6  : string "|   Verde = letra e posicao certas     |"
+tela2Linha7  : string "|                                      |"
+tela2Linha8  : string "|                                      |"
+tela2Linha9  : string "|                                      |"
+tela2Linha10 : string "|                                      |"
+tela2Linha11 : string "|                                      |"
+tela2Linha12 : string "|                                      |"
+tela2Linha13 : string "|                                      |"
+tela2Linha14 : string "|                                      |"
+tela2Linha15 : string "|                                      |"
+tela2Linha16 : string "|                                      |"
+tela2Linha17 : string "|                                      |"
+tela2Linha18 : string "|                                      |"
+tela2Linha19 : string "|                                      |"
+tela2Linha20 : string "|                                      |"
+tela2Linha21 : string "|                                      |"
+tela2Linha22 : string "|                                      |"
+tela2Linha23 : string "|                                      |"
+tela2Linha24 : string "|                                      |"
+tela2Linha25 : string "|                                      |"
+tela2Linha26 : string "|                                      |"
+tela2Linha27 : string "|                                      |"
+tela2Linha28 : string "|                                      |"
+tela2Linha29 : string "o======================================o"
