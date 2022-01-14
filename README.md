@@ -2,7 +2,7 @@
 
 Jogo feito em linguage "Assembly ICMC" para a disciplina de Organização de Computadores
 
-Apresentação do jogo em vídeo:
+Apresentação do jogo em vídeo: https://drive.google.com/file/d/1uXcVLhMG2TAKaauLDcC9ypQyhmNGpHbL/view?usp=sharing
 
 ## Descrição:
 
